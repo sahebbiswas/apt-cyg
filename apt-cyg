@@ -214,6 +214,10 @@ function success {
    printf "${green}%s${nc}\n" "$*"
 }
 
+function error {
+   printf "${red}%s${nc}\n" "$*"
+}
+
 function apt-update {
   if find-workspace
   then
@@ -381,7 +385,7 @@ function download {
   awk '$1 == pc' RS='\n\n@ ' FS='\n' pc=$pkg setup.ini > desc
   if [ ! -s desc ]
   then
-    echo Unable to locate package $pkg
+    error Unable to locate package $pkg
     exit 1
   fi
 
