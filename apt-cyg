@@ -29,6 +29,21 @@ then
   exit
 fi
 
+
+# Color definitions
+# Black        0;30     Dark Gray     1;30
+# Red          0;31     Light Red     1;31
+# Green        0;32     Light Green   1;32
+# Brown/Orange 0;33     Yellow        1;33
+# Blue         0;34     Light Blue    1;34
+# Purple       0;35     Light Purple  1;35
+# Cyan         0;36     Light Cyan    1;36
+# Light Gray   0;37     White         1;37
+red='\033[0;31m'
+green='\033[1;32m'
+yellow='\033[1;33m'
+nc='\033[0m' # No Color
+
 usage="\
 NAME
   apt-cyg - package manager utility
@@ -191,7 +206,12 @@ function check-packages {
 }
 
 function warn {
-  printf '\e[1;31m%s\e[m\n' "$*" >&2
+  printf "${red}%s${nc}\n" "$*" >&2
+}
+
+
+function success {
+   printf "${green}%s${nc}\n" "$*"
 }
 
 function apt-update {
@@ -435,6 +455,15 @@ function apt-searchall {
   done
 }
 
+function already_installed {
+    echo -e "${yellow}Package $1 is already installed, skipping ${nc}"
+}
+
+function not_installed {
+    echo -e "${yellow}Package $1 is not installed, skipping ${nc}"
+}
+
+
 function apt-install {
   check-packages
   find-workspace
@@ -444,7 +473,7 @@ function apt-install {
 
   if grep -q "^$pkg " /etc/setup/installed.db
   then
-    echo Package $pkg is already installed, skipping
+    already_installed $pkg
     continue
   fi
   (( sbq++ )) && echo
@@ -485,7 +514,7 @@ function apt-install {
     do
       if grep -q "^$package " /etc/setup/installed.db
       then
-        echo Package $package is already installed, skipping
+        already_installed $package
         continue
       fi
       apt-cyg install --noscripts $package || (( wr++ ))
@@ -505,7 +534,7 @@ function apt-install {
     $script
     mv $script $script.done
   done
-  echo Package $pkg installed
+  success Package $pkg installed
 
   done
 }
@@ -519,7 +548,7 @@ function apt-remove {
 
   if ! grep -q "^$pkg " setup/installed.db
   then
-    echo Package $pkg is not installed, skipping
+    not_installed $pkg
     continue
   fi
 
@@ -558,7 +587,7 @@ function apt-remove {
     done
     rm -f setup/"$pkg".lst.gz postinstall/"$pkg".sh.done
     awk -i inplace '$1 != ENVIRON["pkg"]' setup/installed.db
-    echo Package $pkg removed
+    success Package $pkg removed
   fi
   rm setup/"$pkg".lst
   if [ $esn = 1 ]
